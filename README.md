@@ -1,7 +1,7 @@
 <div id="crazyara-logo" align="center">
     <br/>
     <img src="./etc/media/rustmonke.jpg" alt="Rust Monke Logo" width="512"/>
-    <h1>A UCI compliant chess engine written in Rust</h1>
+    <h3>A UCI compliant chess engine written in Rust</h3>
 </div>
 
 ## Features
@@ -19,4 +19,15 @@
   - [ ] Piece positioning
 - [ ] [FEN](https://en.wikipedia.org/wiki/Forsyth–Edwards_Notation)-to-position and position-to-FEN
 
-## Extra Features (if we )
+## Extra Features (if we finish the basic ones)
+- [ ] A more advanced evaluation function
+  - [ ] Game phase evaluation
+  - [ ] 
+- [ ] [Move ordering](https://www.chessprogramming.org/Move_Ordering)
+- [ ] [Threading](https://en.wikipedia.org/wiki/Pthreads) to parallelize move generation, search, and evaluation
+
+## Usage
+- [ ] Command line executable
+  - [ ] Evaluates/analyzes positions
+  - [ ] Play games against the computer
+- [ ] Hosted as an official bot on Lichess
