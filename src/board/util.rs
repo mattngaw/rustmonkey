@@ -1,3 +1,5 @@
+//! Helpful constants and functions
+
 pub static PRINT_ORDER: &'static [[u8; 8]; 8] = &[
     [56, 57, 58, 59, 60, 61, 62, 63],
     [48, 49, 50, 51, 52, 53, 54, 55],
