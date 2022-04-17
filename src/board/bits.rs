@@ -26,7 +26,7 @@
 //! . . . . . . . .
 //! . . . . . . . .
 //! . . . . x . . .
-//! */
+//! */ 
 //! ```
 
 use std::ops;
@@ -61,7 +61,7 @@ pub enum Square {
 }
 
 impl Square {
-    // 
+    /// Total number of squares in a board
     pub const COUNT: usize = 64;
 
     /// Creates a new `Square` given an integer `s`
@@ -112,6 +112,56 @@ impl Square {
                     7u8 => File::H,
                     _ => panic!("Attempted to get file of invalid square"),
                 }
+            }
+        }
+    }
+
+    pub fn rank_up(&self) -> Square {
+        match *self {
+            Square::NullSq => panic!("Attempted to +1 the rank of NullSq"),
+            Square::Sq(s) => {
+                if self.rank() == Rank::Eighth { Square::Sq(s) }
+                else { Square::Sq(s + 8) }
+            }
+        }
+    }
+
+    pub fn rank_down(&self) -> Square {
+        match *self {
+            Square::NullSq => panic!("Attempted to -1 the rank of NullSq"),
+            Square::Sq(s) => {
+                if self.rank() == Rank::First { Square::Sq(s) }
+                else { Square::Sq(s - 8) }
+            }
+        }
+    }
+
+    pub fn file_up(&self) -> Square {
+        match *self {
+            Square::NullSq => panic!("Attempted to +1 the file of NullSq"),
+            Square::Sq(s) => {
+                if self.file() == File::H { Square::Sq(s) }
+                else { Square::Sq(s + 1) }
+            }
+        }
+    }
+
+    pub fn file_down(&self) -> Square {
+        match *self {
+            Square::NullSq => panic!("Attempted to -1 the file of NullSq"),
+            Square::Sq(s) => {
+                if self.file() == File::A { Square::Sq(s) }
+                else { Square::Sq(s - 1) }
+            }
+        }
+    }
+
+    pub fn next(&self) -> Square {
+        match *self {
+            Square::NullSq => panic!(""),
+            Square::Sq(s) => {
+                if s >= 63u8 { Square::NullSq }
+                else { Square::Sq(s + 1) }
             }
         }
     }
@@ -172,7 +222,7 @@ impl Square {
 /// most-significant bit represents `Square(63)` (h8).
 /// 
 /// The bits increase in rank-major order (i.e. the second LSB == `Square(1)` 
-/// (a2), the third LSB == `Square(2)` (a3), etc.)
+/// (b1), the third LSB == `Square(2)` (b2), etc.)
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Bitboard {
     /// An invalid bitboard (typically the result of an invalid operation)
@@ -227,7 +277,7 @@ impl ops::Not for Bitboard {
 
 /// Creates an iterator out of the bitboard
 /// 
-/// Iterates over the least significant bit
+/// Iterates over the next least significant bit
 impl Iterator for Bitboard {
     type Item = Square;
 
@@ -246,10 +296,10 @@ impl Iterator for Bitboard {
 
 impl Bitboard {
     /// A bitboard with all bits set
-    const FULL: Bitboard = Bitboard::Bb(!0u64);
+    pub const FULL: Bitboard = Bitboard::Bb(!0u64);
 
     /// A bitboard with none of the bits set
-    const EMPTY: Bitboard = Bitboard::Bb(0u64);
+    pub const EMPTY: Bitboard = Bitboard::Bb(0u64);
     
     /// Creates a new bitboard
     pub fn new(b: u64) -> Bitboard {
@@ -265,32 +315,32 @@ impl Bitboard {
     }
 
     /// Returns whether or not the `s`th bit is set
-    pub fn get(&self, s: Square) -> bool {
-        match (*self, s) {
+    pub fn get(&self, sq: Square) -> bool {
+        match (*self, sq) {
             (Bitboard::NullBb, _) => panic!("Attempted to get on NullBb"),
             (_, Square::NullSq) => panic!("Attempted to get with NullSq"),
-            (B, s) => !((B & s.to_bitboard()).is_empty()),
+            (B, s) => !((B & sq.to_bitboard()).is_empty()),
         }
     }
 
     /// Sets the `s`th bit
-    pub fn set(&mut self, s: Square) {
-        match (&self, s) {
+    pub fn set(&mut self, sq: Square) -> () {
+        match (&self, sq) {
             (Bitboard::NullBb, _) => panic!("Attempted to set on a NullBb"),
             (_, Square::NullSq) => panic!("Attempted to set with a NullSq"),
-            (Bitboard::Bb(b), Square::Sq(s)) => {
-                *self = Bitboard::Bb(*b | (1u64 << s));
+            (Bitboard::Bb(b), Square::Sq(sq)) => {
+                *self = Bitboard::Bb(*b | (1u64 << sq));
             }
         }
     }
 
     /// Resets the `s`th bit
-    pub fn reset(&mut self, s: Square) {
-        match (&self, s) {
+    pub fn reset(&mut self, sq: Square) {
+        match (&self, sq) {
             (Bitboard::NullBb, _) => panic!("Attempted to reset on a NullBb"),
             (_, Square::NullSq) => panic!("Attempted to reset with a NullSq"),
-            (Bitboard::Bb(b), Square::Sq(s)) => {
-                *self = Bitboard::Bb(*b & !(1u64 << s));
+            (Bitboard::Bb(b), Square::Sq(sq)) => {
+                *self = Bitboard::Bb(*b & !(1u64 << sq));
             }
         }
     }
@@ -355,13 +405,19 @@ impl Bitboard {
         match self {
             Bitboard::NullBb => println!("NullBb"),
             B => {
+                let mut bb_string = String::new();
                 for row in PRINT_ORDER {
                     for i in row {
-                        if B.get(Square::Sq(*i)) { print!("x "); } 
-                        else { print!(". "); }
+                        if B.get(Square::Sq(*i)) { 
+                            bb_string.push_str("x ");
+                        } 
+                        else {
+                            bb_string.push_str(". ");
+                        }
                     }
-                    print!("\n");
+                    bb_string.push('\n');
                 }
+                println!("{}", bb_string);
             }
         }
     }
