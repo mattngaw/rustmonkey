@@ -14,10 +14,10 @@ pub struct Castling(u4);
 
 impl Castling {
     /// Both sides can still castle either way
-    const FULL: Castling = Castling(u4::new(0b1111));
+    pub const FULL: Castling = Castling(u4::new(0b1111));
 
     /// Both sides cannot castle either way
-    const EMPTY: Castling = Castling(u4::new(0b0000));
+    pub const EMPTY: Castling = Castling(u4::new(0b0000));
 
     /// Creates a new `Castling`
     pub fn new(v: u8) -> Castling {
