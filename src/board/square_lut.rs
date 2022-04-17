@@ -34,22 +34,22 @@ impl SquareLUT {
     /// Creates a table where every square is empty
     pub fn new() -> SquareLUT {
         SquareLUT { 
-            data: [Piece::Empty; Square::COUNT],
+            data: [Piece::NullPc; Square::COUNT],
         }
     }
 
     /// Gets the piece at the given square
-    pub fn get(&self, s: Square) -> Piece {
-        match s {
-            Square::NullSq => panic!("Attempted to get from NullSq of SquareLUT"),
+    pub fn get(&self, sq: Square) -> Piece {
+        match sq {
+            Square::NullSq => panic!("Attempted to get from SquareLUT at NullSq"),
             Square::Sq(s) => self.data[s as usize],
         }
     }
 
     /// Sets the piece at the given square
-    pub fn set(&mut self, s: Square, p: Piece) -> () {
-        match s {
-            Square::NullSq => panic!("Attempted to set a NullSq of SquareLUT"),
+    pub fn set(&mut self, sq: Square, p: Piece) -> () {
+        match sq {
+            Square::NullSq => panic!("Attempted to set in SquareLUT at NullSq"),
             Square::Sq(s) => self.data[s as usize] = p,
         }
     }
@@ -103,12 +103,12 @@ mod tests {
     fn test_square_lut() {
         let mut sq_lut = SquareLUT::new();
 
-        assert_eq!(sq_lut.get(Square::Sq(0u8)), Piece::Empty);
-        assert_eq!(sq_lut.get(Square::Sq(25u8)), Piece::Empty);
+        assert_eq!(sq_lut.get(Square::Sq(0u8)), Piece::NullPc);
+        assert_eq!(sq_lut.get(Square::Sq(25u8)), Piece::NullPc);
 
         sq_lut.set(Square::Sq(0u8), Piece::Pc(Whose::Ours, PieceType::Q));
         assert_eq!(sq_lut.get(Square::Sq(0u8)),
                          Piece::Pc(Whose::Ours, PieceType::Q));
-        assert_eq!(sq_lut.get(Square::Sq(25u8)), Piece::Empty);
+        assert_eq!(sq_lut.get(Square::Sq(25u8)), Piece::NullPc);
     }
 }
