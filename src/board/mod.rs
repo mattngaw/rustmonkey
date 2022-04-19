@@ -45,6 +45,13 @@ pub enum Whose {
 impl Whose {
     // Number of sides to the game (two sides, duh)
     pub const COUNT: usize = 2usize;
+
+    pub fn flip (&mut self) -> () {
+        match *self {
+            Whose::Ours => *self = Whose::Theirs,
+            Whose::Theirs => *self = Whose::Ours,
+        }
+    }
 }
 
 /// Tuple of [`PieceType`] and [`Whose`]
@@ -86,10 +93,10 @@ pub enum Color {
 }
 
 impl Color {
-    pub fn flip(&self) -> Color {
-        match self {
-            Color::White => Color::Black,
-            Color::Black => Color::White,
+    pub fn flip(&mut self) -> () {
+        match *self {
+            Color::White => *self = Color::Black,
+            Color::Black => *self = Color::White,
         }
     }
 }
@@ -101,10 +108,9 @@ impl Color {
 pub struct Board {
     whose_bbs: [Bitboard; Whose::COUNT],
     piece_type_bbs: [Bitboard; PieceType::NK_COUNT],
-    king: [Square; Whose::COUNT],
+    kings: [Square; Whose::COUNT],
     sq_lut: SquareLUT,
     castling: Castling,
-    whose: Whose,
     color: Color,
     en_passant: Square,
     half_moves: u8,
@@ -120,10 +126,9 @@ impl Board {
         Board { 
             whose_bbs: [Bitboard::NullBb; Whose::COUNT], 
             piece_type_bbs: [Bitboard::NullBb; PieceType::NK_COUNT], 
-            king: [Square::NullSq; Whose::COUNT], 
+            kings: [Square::NullSq; Whose::COUNT], 
             sq_lut: SquareLUT::new(), 
             castling: Castling::EMPTY, 
-            whose: Whose::Ours, 
             color: Color::White, 
             en_passant: Square::NullSq, 
             half_moves: 0u8, 
@@ -148,7 +153,11 @@ impl Board {
                     Piece::Empty => (),
                     Piece::Pc(w_prev, pt_prev) => {
                         self.whose_bbs[w_prev as usize].reset(sq);
-                        self.piece_type_bbs[pt_prev as usize].reset(sq);
+                        if pt_prev == PieceType::K {
+                            self.kings[w_prev as usize] = Square::NullSq;
+                        } else {
+                            self.piece_type_bbs[pt_prev as usize].reset(sq);
+                        }
                     }
                 }
                 match p {
@@ -156,12 +165,43 @@ impl Board {
                     Piece::Empty => (),
                     Piece::Pc(w, pt) => {
                         self.whose_bbs[w as usize].set(sq);
-                        self.piece_type_bbs[pt as usize].set(sq);
+                        if pt == PieceType::K {
+                            self.kings[w as usize] = sq;
+                        } else {
+                            self.piece_type_bbs[pt as usize].set(sq);
+                        }
                     }
                 }
                 self.sq_lut.set(sq, p);
             }
         }
+    }
+
+    pub fn move_piece (&mut self, to: Square, from: Square) -> () {
+        let p_from = self.get(from);
+        match p_from {
+            Piece::NullPc => panic!("Attempted to move NullPc"),
+            Piece::Empty => panic!("Attempted to move Empty"),
+            Piece::Pc(_, _) => self.set(from, Piece::Empty),
+        };
+        let p_to = self.get(to);
+        match p_to {
+            Piece::NullPc => panic!("Attempted to move to a NullPc"),
+            _ => self.set(to, p_from),
+        }
+    }
+
+    pub fn flip (&mut self) -> () {
+        for wbb in &mut self.whose_bbs { wbb.flip(); }
+        for ptbb in &mut self.piece_type_bbs { ptbb.flip(); }
+        for k in &mut self.kings { k.flip(); }
+        self.sq_lut.flip();
+        self.castling.flip();
+        self.color.flip();
+    }
+
+    pub fn print (&self) -> () {
+        self.sq_lut.print();
     }
 }
 
@@ -176,7 +216,18 @@ mod tests {
         bd.whose_bbs = [Bitboard::EMPTY; Whose::COUNT];
         bd.piece_type_bbs = [Bitboard::EMPTY; PieceType::NK_COUNT];
         assert_eq!(bd.get(Square::Sq(16)), Piece::NullPc);
+        for i in 0u8..64u8 {
+            bd.set(Square::new(i), Piece::Empty);
+        }
+        bd.set(Square::new(0u8), Piece::Pc(Whose::Ours, PieceType::K));
+        bd.set(Square::new(60u8), Piece::Pc(Whose::Theirs, PieceType::K));
         bd.set(Square::Sq(16), Piece::Pc(Whose::Ours, PieceType::N));
         assert_eq!(bd.get(Square::Sq(16)), Piece::Pc(Whose::Ours, PieceType::N));
+        assert_eq!(bd.get(Square::Sq(0)), Piece::Pc(Whose::Ours, PieceType::K));
+        assert_eq!(bd.get(Square::Sq(60)), Piece::Pc(Whose::Theirs, PieceType::K));
+        bd.flip();
+        assert_eq!(bd.get(Square::Sq(47)), Piece::Pc(Whose::Theirs, PieceType::N));
+        assert_eq!(bd.get(Square::Sq(63)), Piece::Pc(Whose::Theirs, PieceType::K));
+        assert_eq!(bd.get(Square::Sq(3)), Piece::Pc(Whose::Ours, PieceType::K));
     }
 }
