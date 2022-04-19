@@ -2,23 +2,22 @@
 
 ## `board`
 
-- [ ] bits.rs
+- [x] bits.rs
   - [x] Rank
   - [x] File
   - [x] Square
   - [x] Bitboard
 - [x] castling.rs
   - [x] Castling
-- [ ] fen.rs
-  - [ ] fen to board
-  - [ ] board to fen
 - [x] square_lut.rs
   - [x] SquareLUT
 - [ ] zobrist.rs
   - [ ] hash position
   - [ ] zobrist table
 - [ ] mod.rs
-  - [ ] Board
+  - [x] Board
+  - [ ] fen to board
+  - [ ] board to fen
   - [ ] ...
 
 ## `helper`
