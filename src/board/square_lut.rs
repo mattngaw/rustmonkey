@@ -1,7 +1,5 @@
 //! A quick lookup table for determining what [`Piece`] is located at a square
 
-use std::fmt::Display;
-
 use super::{Piece, Whose, PieceType};
 use super::bits::Square;
 use super::util::PRINT_ORDER;
@@ -13,21 +11,6 @@ use super::util::PRINT_ORDER;
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct SquareLUT {
     data: [Piece; Square::COUNT],
-}
-
-impl Display for SquareLUT {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let mut board_string = String::new();
-        for row in PRINT_ORDER {
-            for i in row {
-                let index = Square::Sq(*i);
-                board_string.push(self.get(index).to_char());
-                board_string.push(' ');
-            }
-            board_string.push('\n');
-        }
-        write!(f, "{}", board_string)
-    }
 }
 
 impl SquareLUT {
@@ -52,6 +35,30 @@ impl SquareLUT {
             Square::NullSq => panic!("Attempted to set in SquareLUT at NullSq"),
             Square::Sq(s) => self.data[s as usize] = p,
         }
+    }
+
+    // Flips a SquareLUT
+    pub fn flip(&mut self) -> () {
+        self.data.reverse();
+        for p in &mut self.data {
+            match p {
+                Piece::Pc(w, _) => w.flip(),
+                _ => ()
+            }
+        }
+    }
+
+    pub fn print(&self) {
+        let mut board_string = String::new();
+        for row in PRINT_ORDER {
+            for i in row {
+                let index = Square::Sq(*i);
+                board_string.push(self.get(index).to_char());
+                board_string.push(' ');
+            }
+            board_string.push('\n');
+        }
+        print!("{}", board_string);
     }
 }
 
@@ -110,5 +117,8 @@ mod tests {
         assert_eq!(sq_lut.get(Square::Sq(0u8)),
                          Piece::Pc(Whose::Ours, PieceType::Q));
         assert_eq!(sq_lut.get(Square::Sq(25u8)), Piece::NullPc);
+        sq_lut.flip();
+        assert_eq!(sq_lut.get(Square::Sq(38u8)), Piece::NullPc);
+        assert_eq!(sq_lut.get(Square::Sq(63u8)), Piece::Pc(Whose::Theirs, PieceType::Q));
     }
 }
