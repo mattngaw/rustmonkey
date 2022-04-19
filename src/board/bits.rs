@@ -197,13 +197,13 @@ impl Square {
         }
     }
     
-    /// Returns the "flipped" representation of the square
+    /// "Flips" representation of the square
     /// 
     /// Used when representing the chess board from the opponent's perspective.
-    pub fn flipped(&self) -> Square {
-        match self {
+    pub fn flip(&mut self) -> () {
+        match *self {
             Square::NullSq => panic!("Attempted to flip a NullSq"),
-            Square::Sq(s) => Square::Sq(63u8 - s),
+            Square::Sq(s) => *self = Square::Sq(63u8 - s),
         }
     }
 
@@ -394,7 +394,7 @@ impl Bitboard {
     /// 
     /// Used to represent the bitboard for the opponent's perspective. 
     pub fn flip(&mut self) {
-        match &self {
+        match *self {
             Bitboard::NullBb => panic!("Attempted to pop_count on NullBb"),
             Bitboard::Bb(b) => *self = Bitboard::Bb(b.reverse_bits()),
         }
@@ -432,8 +432,9 @@ mod tests {
     fn test_square() {
         assert_eq!(Square::Sq(11u8), Square::from(File::D, Rank::Second));
         
-        let s1: Square = Square::Sq(15u8);
-        assert_eq!(Square::Sq(48u8), s1.flipped());
+        let mut s1: Square = Square::Sq(15u8);
+        s1.flip();
+        assert_eq!(Square::Sq(48u8), s1);
     }
 
     #[test]
