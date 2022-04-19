@@ -200,6 +200,18 @@ impl Board {
         self.color.flip();
     }
 
+    pub fn castling_get(&mut self, w: Whose, cs: CastlingSide) -> bool {
+        self.castling.get(w, cs)
+    }
+
+    pub fn castling_set(&mut self, w: Whose, cs: CastlingSide) -> () {
+        self.castling.set(w, cs)
+    }
+
+    pub fn castling_reset(&mut self, w: Whose, cs: CastlingSide) -> () {
+        self.castling.reset(w, cs)
+    }
+
     pub fn print (&self) -> () {
         self.sq_lut.print();
     }
