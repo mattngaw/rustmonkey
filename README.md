@@ -6,7 +6,7 @@
 
 ## Features
 
-- [ ] [Bitboard](https://www.chessprogramming.org/Bitboards) board representation
+- [x] [Bitboard](https://www.chessprogramming.org/Bitboards) board representation
 - [ ] Pseudo-legal + legal move generation
 - [ ] [Transposition table](https://www.chessprogramming.org/Transposition_Table) with [Zobrist Hashing](https://www.chessprogramming.org/Zobrist_Hashing)
 - [ ] [Negamax search](https://www.chessprogramming.org/Negamax)
