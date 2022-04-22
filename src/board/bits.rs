@@ -30,6 +30,8 @@
 //! ```
 
 use std::ops;
+use std::cmp::Ordering;
+use std::fmt;
 
 use super::util::*;
 
@@ -60,9 +62,20 @@ pub enum Square {
     Sq(u8),
 }
 
+impl fmt::Display for Square {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Square::NullSq => write!(f, "NullSq"),
+            Square::Sq(s) => write!(f, "Sq({})", s),
+        }
+    }
+}
+
 impl Square {
     /// Total number of squares in a board
     pub const COUNT: usize = 64;
+    pub const MIN_VAL: u8 = 0;
+    pub const MAX_VAL: u8 = 63;
 
     /// Creates a new `Square` given an integer `s`
     /// 
@@ -74,6 +87,24 @@ impl Square {
     /// Creates a new `Square` from a [`Rank`] and a [`File`]
     pub fn from(f: File, r: Rank) -> Square {
         Square::Sq((r as u8) * (Rank::COUNT as u8) + (f as u8))
+    }
+
+    pub fn range(s1: u8, s2: u8) -> SquareRange {
+        if s1 > Square::MAX_VAL {
+            panic!("Attempted to start range with invalid square value");
+        }
+        if s2 != 64u8 && s2 > Square::MAX_VAL {
+            panic!("Attempted to end range with invalid square value");
+        }
+        match s1.cmp(&s2) {
+            Ordering::Equal => panic!("Attempted to make empty range"),
+            _ => {
+                SquareRange {
+                    current: s1,
+                    end: s2,
+                }
+            }
+        }
     }
 
     /// Returns the [`Rank`] of the square
@@ -167,7 +198,7 @@ impl Square {
     }
 
     /// Returns the string representation of the square
-    pub fn to_string(&self) -> String{ 
+    pub fn to_string(&self) -> String {
         match self {
             Square::NullSq => panic!("Attempted to convert NullSq to string"),
             Square::Sq(_) => {
@@ -212,6 +243,27 @@ impl Square {
         match self {
             Square::NullSq => panic!("Attempted to turn a NullSq to a Bb"),
             Square::Sq(s) => Bitboard::Bb(1 << s),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct SquareRange {
+    current: u8,
+    end: u8
+}
+
+impl Iterator for SquareRange {
+    type Item = Square;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current == self.end {
+            None
+        } else {
+            let result = Square::Sq(self.current);
+            if self.current < self.end { self.current += 1 }
+            else { self.current -= 1 } // self.current > self.end
+            Some(result)
         }
     }
 }
