@@ -37,18 +37,94 @@ use super::util::*;
 
 /// The rows of a chess board
 #[derive(PartialEq, Debug, Copy, Clone)]
-pub enum Rank { First, Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth, }
+pub enum Rank { 
+    First = 0,
+    Second = 1, 
+    Third = 2,
+    Fourth = 3, 
+    Fifth = 4, 
+    Sixth = 5, 
+    Seventh = 6, 
+    Eighth = 7, 
+    Null
+}
 
 impl Rank {
     const COUNT: usize = 8;
+
+    pub fn convert(x: isize) -> Rank {
+        match x {
+            0isize => Rank::First,
+            1isize => Rank::Second,
+            2isize => Rank::Third,
+            3isize => Rank::Fourth,
+            4isize => Rank::Fifth,
+            5isize => Rank::Sixth,
+            6isize => Rank::Seventh,
+            7isize => Rank::Eighth,
+            _ => Rank::Null
+        }
+    }
+
+    pub fn flipped(&self) -> Rank {
+        match *self {
+            Rank::First => Rank::Eighth,
+            Rank::Second => Rank::Seventh,
+            Rank::Third => Rank::Sixth,
+            Rank::Fourth => Rank::Fifth,
+            Rank::Fifth => Rank::Fourth,
+            Rank::Sixth => Rank::Third,
+            Rank::Seventh => Rank::Second,
+            Rank::Eighth => Rank::First,
+            Rank::Null => Rank::Null
+        }
+    }
 }
 
 /// The columns of a chess board
 #[derive(PartialEq, Debug, Copy, Clone)]
-pub enum File { A, B, C, D, E, F, G, H, }
+pub enum File { 
+    A = 0, 
+    B = 1, 
+    C = 2, 
+    D = 3, 
+    E = 4, 
+    F = 5, 
+    G = 6, 
+    H = 7, 
+    Null
+}
 
 impl File {
     const COUNT: usize = 8;
+
+    pub fn convert(x: isize) -> File {
+        match x {
+            0isize => File::A,
+            1isize => File::B,
+            2isize => File::C,
+            3isize => File::D,
+            4isize => File::E,
+            5isize => File::F,
+            6isize => File::G,
+            7isize => File::H,
+            _ => File::Null
+        }
+    }
+
+    pub fn flipped(&self) -> File {
+        match *self {
+            File::A => File::H,
+            File::B => File::G,
+            File::C => File::F,
+            File::D => File::E,
+            File::E => File::D,
+            File::F => File::C,
+            File::G => File::B,
+            File::H => File::A,
+            File::Null => File::Null
+        }
+    }
 }
 
 /// A value ranging from 0 to 64, representing the squares from a1-h8 in 
@@ -56,7 +132,7 @@ impl File {
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub enum Square {
     /// An invalid square (typically the result of unsafe operations)
-    NullSq,
+    Null,
     
     /// A valid square (ranges from a1 to h8)
     Sq(u8),
@@ -65,7 +141,7 @@ pub enum Square {
 impl fmt::Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Square::NullSq => write!(f, "NullSq"),
+            Square::Null => write!(f, "Null"),
             Square::Sq(s) => write!(f, "Sq({})", s),
         }
     }
@@ -79,14 +155,18 @@ impl Square {
 
     /// Creates a new `Square` given an integer `s`
     /// 
-    /// Squares initialized with values greater than 63 are mapped to `NullSq`.
+    /// Squares initialized with values greater than 63 are mapped to `Null`.
     pub fn new(s: u8) -> Square {
-        if s > 63 { Square::NullSq } else { Square::Sq(s) }
+        if s > 63 { Square::Null } else { Square::Sq(s) }
     }
 
     /// Creates a new `Square` from a [`Rank`] and a [`File`]
     pub fn from(f: File, r: Rank) -> Square {
-        Square::Sq((r as u8) * (Rank::COUNT as u8) + (f as u8))
+        match (f, r) {
+            (File::Null, _) => Square::Null,
+            (_, Rank::Null) => Square::Null,
+            _ => Square::Sq((r as u8) * (Rank::COUNT as u8) + (f as u8))
+        }
     }
 
     pub fn range(s1: u8, s2: u8) -> SquareRange {
@@ -110,7 +190,7 @@ impl Square {
     /// Returns the [`Rank`] of the square
     pub fn rank(&self) -> Rank {
         match self {
-            Square::NullSq => panic!("Attempted to get rank of NullSq"),
+            Square::Null => panic!("Attempted to get rank of Square::Null"),
             Square::Sq(s) => {
                 match s / 8u8 {
                     0u8 => Rank::First,
@@ -130,7 +210,7 @@ impl Square {
     /// Returns the [`File`] of the square
     pub fn file(&self) -> File {
         match self {
-            Square::NullSq => panic!("Attempted to get rank of NullSq"),
+            Square::Null => panic!("Attempted to get rank of Square::Null"),
             Square::Sq(s) => {
                 match s % 8u8 {
                     0u8 => File::A,
@@ -149,9 +229,9 @@ impl Square {
 
     pub fn rank_up(&self) -> Square {
         match *self {
-            Square::NullSq => panic!("Attempted to +1 the rank of NullSq"),
+            Square::Null => panic!("Attempted to +1 the rank of Square::Null"),
             Square::Sq(s) => {
-                if self.rank() == Rank::Eighth { Square::Sq(s) }
+                if self.rank() == Rank::Eighth { Square::Null }
                 else { Square::Sq(s + 8) }
             }
         }
@@ -159,9 +239,9 @@ impl Square {
 
     pub fn rank_down(&self) -> Square {
         match *self {
-            Square::NullSq => panic!("Attempted to -1 the rank of NullSq"),
+            Square::Null => panic!("Attempted to -1 the rank of Square::Null"),
             Square::Sq(s) => {
-                if self.rank() == Rank::First { Square::Sq(s) }
+                if self.rank() == Rank::First { Square::Null }
                 else { Square::Sq(s - 8) }
             }
         }
@@ -169,9 +249,9 @@ impl Square {
 
     pub fn file_up(&self) -> Square {
         match *self {
-            Square::NullSq => panic!("Attempted to +1 the file of NullSq"),
+            Square::Null => panic!("Attempted to +1 the file of Square::Null"),
             Square::Sq(s) => {
-                if self.file() == File::H { Square::Sq(s) }
+                if self.file() == File::H { Square::Null }
                 else { Square::Sq(s + 1) }
             }
         }
@@ -179,9 +259,9 @@ impl Square {
 
     pub fn file_down(&self) -> Square {
         match *self {
-            Square::NullSq => panic!("Attempted to -1 the file of NullSq"),
+            Square::Null => panic!("Attempted to -1 the file of Square::Null"),
             Square::Sq(s) => {
-                if self.file() == File::A { Square::Sq(s) }
+                if self.file() == File::A { Square::Null }
                 else { Square::Sq(s - 1) }
             }
         }
@@ -189,10 +269,25 @@ impl Square {
 
     pub fn next(&self) -> Square {
         match *self {
-            Square::NullSq => panic!(""),
+            Square::Null => panic!("Attempted to get the next square after Square::Null"),
             Square::Sq(s) => {
-                if s >= 63u8 { Square::NullSq }
+                if s >= 63u8 { Square::Null }
                 else { Square::Sq(s + 1) }
+            }
+        }
+    }
+
+    pub fn offset(&self, dx: i8, dy: i8) -> Square {
+        match *self {
+            Square::Null => panic!("Attempted to get offset from Square::Null"),
+            Square::Sq(s) => {
+                let f = self.file();
+                let r = self.rank();
+                let f_val = (f as i8) + dx;
+                let r_val = (r as i8) + dy;
+                let f_ = File::convert(f_val as isize);
+                let r_ = Rank::convert(r_val as isize);
+                Square::from(f_, r_)
             }
         }
     }
@@ -200,7 +295,7 @@ impl Square {
     /// Returns the string representation of the square
     pub fn to_string(&self) -> String {
         match self {
-            Square::NullSq => panic!("Attempted to convert NullSq to string"),
+            Square::Null => panic!("Attempted to convert Square::Null to string"),
             Square::Sq(_) => {
                 let mut str: String = String::new();
                 match self.file() {
@@ -212,6 +307,7 @@ impl Square {
                     File::F => str.push('f'),
                     File::G => str.push('g'),
                     File::H => str.push('h'),
+                    File::Null => str.push('X')
                 };
                 match self.rank() {
                     Rank::First => str.push('1'),
@@ -222,6 +318,7 @@ impl Square {
                     Rank::Sixth => str.push('6'),
                     Rank::Seventh => str.push('7'),
                     Rank::Eighth => str.push('8'),
+                    Rank::Null => str.push('X')
                 }
                 str
             }
@@ -233,7 +330,7 @@ impl Square {
     /// Used when representing the chess board from the opponent's perspective.
     pub fn flip(&mut self) -> () {
         match *self {
-            Square::NullSq => panic!("Attempted to flip a NullSq"),
+            Square::Null => panic!("Attempted to flip a Square::Null"),
             Square::Sq(s) => *self = Square::Sq(63u8 - s),
         }
     }
@@ -241,7 +338,7 @@ impl Square {
     /// Converts the square into a singular (only one set bit) [`Bitboard`]
     pub fn to_bitboard(&self) -> Bitboard {
         match self {
-            Square::NullSq => panic!("Attempted to turn a NullSq to a Bb"),
+            Square::Null => panic!("Attempted to turn a Square::Null to a Bb"),
             Square::Sq(s) => Bitboard::Bb(1 << s),
         }
     }
@@ -278,7 +375,7 @@ impl Iterator for SquareRange {
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Bitboard {
     /// An invalid bitboard (typically the result of an invalid operation)
-    NullBb,
+    Null,
 
     Bb(u64),
 }
@@ -289,7 +386,7 @@ impl ops::BitOr for Bitboard {
     fn bitor(self, rhs: Self) -> Bitboard {
         match (self, rhs) {
             (Bitboard::Bb(a), Bitboard::Bb(b)) => Bitboard::Bb(a | b),
-            (_, _) => panic!("Attempted to | with NullBb"),
+            (_, _) => panic!("Attempted to | with Bitboard::Null"),
         }
     }
 }
@@ -300,7 +397,7 @@ impl ops::BitAnd for Bitboard {
     fn bitand(self, rhs: Self) -> Bitboard {
         match (self, rhs) {
             (Bitboard::Bb(a), Bitboard::Bb(b)) => Bitboard::Bb(a & b),
-            (_, _) => panic!("Attempted to & with NullBb"),
+            (_, _) => panic!("Attempted to & with Bitboard::Null"),
         }
     }
 }
@@ -311,7 +408,7 @@ impl ops::BitXor for Bitboard {
     fn bitxor(self, rhs: Self) -> Bitboard {
         match (self, rhs) {
             (Bitboard::Bb(a), Bitboard::Bb(b)) => Bitboard::Bb(a ^ b),
-            (_, _) => panic!("Attempted to ^ with NullBb"),
+            (_, _) => panic!("Attempted to ^ with Bitboard::Null"),
         }
     }
 }
@@ -321,7 +418,7 @@ impl ops::Not for Bitboard {
 
     fn not(self) -> Bitboard {
         match self {
-            Bitboard::NullBb => panic!("Attempted to ! with NullBb"),
+            Bitboard::Null => panic!("Attempted to ! with Bitboard::Null"),
             Bitboard::Bb(a) => Bitboard::Bb(!a),
         }
     }
@@ -335,7 +432,7 @@ impl Iterator for Bitboard {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            Bitboard::NullBb => panic!("Attempted to iterate "),
+            Bitboard::Null => panic!("Attempted to iterate over Bitboard::Null"),
             Bitboard::Bb(0u64) => None,
             Bitboard::Bb(b) => {
                 let lsb: Square = Square::Sq(b.trailing_zeros() as u8);
@@ -361,7 +458,7 @@ impl Bitboard {
     /// Returns whether or not the bitboard is empty (all zeros)
     pub fn is_empty(&self) -> bool {
         match self {
-            Bitboard::NullBb => panic!("Attempted to check if NullBb is empty"),
+            Bitboard::Null => panic!("Attempted to check if Bitboard::Null is empty"),
             Bitboard::Bb(b) => *b == 0u64,
         }
     }
@@ -369,8 +466,8 @@ impl Bitboard {
     /// Returns whether or not the `s`th bit is set
     pub fn get(&self, sq: Square) -> bool {
         match (*self, sq) {
-            (Bitboard::NullBb, _) => panic!("Attempted to get on NullBb"),
-            (_, Square::NullSq) => panic!("Attempted to get with NullSq"),
+            (Bitboard::Null, _) => panic!("Attempted to get on Bitboard::Null"),
+            (_, Square::Null) => panic!("Attempted to get with Bitboard::Null"),
             (B, s) => !((B & sq.to_bitboard()).is_empty()),
         }
     }
@@ -378,8 +475,8 @@ impl Bitboard {
     /// Sets the `s`th bit
     pub fn set(&mut self, sq: Square) -> () {
         match (&self, sq) {
-            (Bitboard::NullBb, _) => panic!("Attempted to set on a NullBb"),
-            (_, Square::NullSq) => panic!("Attempted to set with a NullSq"),
+            (Bitboard::Null, _) => panic!("Attempted to set on a Bitboard::Null"),
+            (_, Square::Null) => panic!("Attempted to set with a Bitboard::Null"),
             (Bitboard::Bb(b), Square::Sq(sq)) => {
                 *self = Bitboard::Bb(*b | (1u64 << sq));
             }
@@ -389,8 +486,8 @@ impl Bitboard {
     /// Resets the `s`th bit
     pub fn reset(&mut self, sq: Square) {
         match (&self, sq) {
-            (Bitboard::NullBb, _) => panic!("Attempted to reset on a NullBb"),
-            (_, Square::NullSq) => panic!("Attempted to reset with a NullSq"),
+            (Bitboard::Null, _) => panic!("Attempted to reset on a Bitboard::Null"),
+            (_, Square::Null) => panic!("Attempted to reset with a Bitboard::Null"),
             (Bitboard::Bb(b), Square::Sq(sq)) => {
                 *self = Bitboard::Bb(*b & !(1u64 << sq));
             }
@@ -400,7 +497,7 @@ impl Bitboard {
     /// Returns whether or not the bitboard is singular
     pub fn is_singular(&self) -> bool {
         match self {
-            Bitboard::NullBb => panic!("Attempted to check if NullBb is singular"),
+            Bitboard::Null => panic!("Attempted to check if Bitboard::Null is singular"),
             Bitboard::Bb(b) => b.is_power_of_two(),
         }
     }
@@ -408,7 +505,7 @@ impl Bitboard {
     /// Converts a singular bitboard to a [`Square`]
     pub fn to_square(&self) -> Square {
         match self {
-            Bitboard::NullBb => panic!("Attempted to turn a NullBb to Sq"),
+            Bitboard::Null => panic!("Attempted to turn a Bitboard::Null to Sq"),
             Bitboard::Bb(b) => {
                 if self.is_singular() { Square::Sq(b.trailing_zeros() as u8) } 
                 else { panic!("Attempted to turn non-singular Bb to Sq") }
@@ -419,7 +516,7 @@ impl Bitboard {
     /// Returns the number of set bits in the bitboard
     pub fn pop_count(&self) -> u8 {
         match self {
-            Bitboard::NullBb => panic!("Attempted to pop_count on NullBb"),
+            Bitboard::Null => panic!("Attempted to pop_count on Bitboard::Null"),
             Bitboard::Bb(b) => b.count_ones() as u8,
         }
     }
@@ -427,8 +524,8 @@ impl Bitboard {
     /// Returns the least-significant set bit as a [`Square`]
     pub fn lsb(&self) -> Square {
         match self {
-            Bitboard::NullBb => panic!("Attempted to get LSB of NullBb"),
-            Bitboard::Bb(0u64) => Square::NullSq,
+            Bitboard::Null => panic!("Attempted to get LSB of Bitboard::Null"),
+            Bitboard::Bb(0u64) => Square::Null,
             Bitboard::Bb(b) => Square::Sq(b.trailing_zeros() as u8),
         }
     }
@@ -436,8 +533,8 @@ impl Bitboard {
     /// Returns the most-significant set bit as a [`Square`]
     pub fn msb(&self) -> Square {
         match self {
-            Bitboard::NullBb => panic!("Attempted to get MSB of NullBb"),
-            Bitboard::Bb(0u64) => Square::NullSq,
+            Bitboard::Null => panic!("Attempted to get MSB of Bitboard::Null"),
+            Bitboard::Bb(0u64) => Square::Null,
             Bitboard::Bb(b) => Square::Sq(b.leading_zeros() as u8),
         }
     }
@@ -447,7 +544,7 @@ impl Bitboard {
     /// Used to represent the bitboard for the opponent's perspective. 
     pub fn flip(&mut self) {
         match *self {
-            Bitboard::NullBb => panic!("Attempted to pop_count on NullBb"),
+            Bitboard::Null => panic!("Attempted to pop_count on Bitboard::Null"),
             Bitboard::Bb(b) => *self = Bitboard::Bb(b.reverse_bits()),
         }
     }
@@ -455,7 +552,7 @@ impl Bitboard {
     /// Prints the bitboard as an 8x8 grid
     pub fn print(&self) {
         match self {
-            Bitboard::NullBb => println!("NullBb"),
+            Bitboard::Null => println!("Bitboard::Null"),
             B => {
                 let mut bb_string = String::new();
                 for row in PRINT_ORDER {
@@ -517,6 +614,15 @@ mod tests {
         assert_eq!(Bitboard::EMPTY, b1 & b3);
         b1.reset(Square::Sq(60u8));
         assert!(b1.is_empty());
+    }
+
+    #[test]
+    fn test_offset() {
+        assert_eq!(Square::from(File::E, Rank::Fourth).offset(2, 1),
+                   Square::from(File::G, Rank::Fifth));
+        assert_eq!(Square::from(File::E, Rank::Fourth).offset(5, 1),
+                   Square::Null);
+
     }
 
 }
