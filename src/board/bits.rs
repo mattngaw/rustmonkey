@@ -169,6 +169,17 @@ impl Square {
         }
     }
 
+    pub fn val(&self) -> u8 {
+        match *self {
+            Square::Null => panic!("Expected to convert Square::Sq to value, instead got Square::Null"),
+            Square::Sq(s) => s
+        }
+    }
+
+    pub fn is_null(&self) -> bool {
+        *self == Square::Null
+    }
+
     pub fn range(s1: u8, s2: u8) -> SquareRange {
         if s1 > Square::MAX_VAL {
             panic!("Attempted to start range with invalid square value");
@@ -342,6 +353,10 @@ impl Square {
             Square::Sq(s) => Bitboard::Bb(1 << s),
         }
     }
+
+    pub fn print(&self) -> () {
+        println!("{}", self.to_string());
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -476,7 +491,7 @@ impl Bitboard {
     pub fn set(&mut self, sq: Square) -> () {
         match (&self, sq) {
             (Bitboard::Null, _) => panic!("Attempted to set on a Bitboard::Null"),
-            (_, Square::Null) => panic!("Attempted to set with a Bitboard::Null"),
+            (_, Square::Null) => panic!("Attempted to set with a Square::Null"),
             (Bitboard::Bb(b), Square::Sq(sq)) => {
                 *self = Bitboard::Bb(*b | (1u64 << sq));
             }
@@ -577,7 +592,7 @@ mod tests {
     
     use super::*;
 
-    #[test]
+    // #[test]
     fn test_square() {
         assert_eq!(Square::Sq(11u8), Square::from(File::D, Rank::Second));
         
@@ -586,7 +601,7 @@ mod tests {
         assert_eq!(Square::Sq(48u8), s1);
     }
 
-    #[test]
+    // #[test]
     fn test_bitboard() {
         let mut b1 = Bitboard::EMPTY;
         let s1: Square = Square::Sq(10u8);
@@ -616,7 +631,7 @@ mod tests {
         assert!(b1.is_empty());
     }
 
-    #[test]
+    // #[test]
     fn test_offset() {
         assert_eq!(Square::from(File::E, Rank::Fourth).offset(2, 1),
                    Square::from(File::G, Rank::Fifth));
