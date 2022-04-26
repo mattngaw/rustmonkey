@@ -1,3 +1,4 @@
+use super::Direction;
 use crate::board::bits::{File, Rank, Square, Bitboard};
 
 static mut FILES_TABLE: [Bitboard; 8] = [Bitboard::Null; 8];
@@ -20,6 +21,10 @@ static KNIGHT_OFFSETS: [(i8, i8); 8] = [
 
 static KING_OFFSETS: [(i8, i8); 8] = [
     (0,1), (1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1)
+];
+
+static RAY_VECTORS: [(i8, i8); 8] = [
+    (0,1), (1,0), (0,-1), (-1,0), (1,1), (1,-1), (-1,-1), (-1,1)
 ];
 
 pub fn get_file_bb(f: File) -> Bitboard {
@@ -76,7 +81,16 @@ pub fn get_king_moves(sq: Square) -> Bitboard {
     }
 }
 
-fn build_files_table() -> () {
+pub fn get_ray(sq: Square, dir: Direction) -> Bitboard {
+    unsafe {
+        match sq {
+            Square::Null => panic!("Attempted to get ray from Square::Null"),
+            Square::Sq(s) => RAYS_TABLE[dir as usize][s as usize]
+        }
+    }
+}
+
+fn build_files() -> () {
     unsafe {
         for (i, bb) in FILES_TABLE.iter_mut().enumerate() {
             let f = File::convert(i as isize);
@@ -93,7 +107,7 @@ fn build_files_table() -> () {
     }
 }
 
-fn build_ranks_table() -> () {
+fn build_ranks() -> () {
     unsafe {
         for (i, bb) in RANKS_TABLE.iter_mut().enumerate() {
             let r = Rank::convert(i as isize);
@@ -110,7 +124,7 @@ fn build_ranks_table() -> () {
     }
 }
 
-fn build_pawn_moves_table() -> () {
+fn build_pawn_moves() -> () {
     unsafe {
         for (i, bb) in PAWN_MOVES_TABLE.iter_mut().enumerate() {
             let sq = Square::new(i as u8);
@@ -127,7 +141,7 @@ fn build_pawn_moves_table() -> () {
     }
 }
 
-fn build_pawn_attacks_table() -> () {
+fn build_pawn_attacks() -> () {
     unsafe {
         for (i, bb) in PAWN_ATTACKS_TABLE.iter_mut().enumerate() {
             let sq = Square::new(i as u8);
@@ -177,6 +191,35 @@ fn build_king_moves() -> () {
     }
 }
 
+fn build_rays() -> () {
+    unsafe {
+        for (i, ray_array) in RAYS_TABLE.iter_mut().enumerate() {
+            let (dx, dy) = RAY_VECTORS[i];
+            for (j, bb) in ray_array.iter_mut().enumerate() {
+                let mut sq = Square::new(j as u8);
+                *bb = Bitboard::EMPTY;
+                loop {
+                    match dx {
+                        0i8 => (),
+                        1i8 => sq = sq.file_up(), 
+                        -1i8 => sq = sq.file_down(),
+                        _ => panic!("Invalid dx in ray vector")
+                    }
+                    if sq.is_null() { break; }
+                    match dy {
+                        0i8 => (),
+                        1i8 => sq = sq.rank_up(), 
+                        -1i8 => sq = sq.rank_down(),
+                        _ => panic!("Invalid dy in ray vector")
+                    }
+                    if sq.is_null() { break; }
+                    bb.set(sq);
+                }
+            }
+        }
+    }
+}
+
 
 
 #[cfg(test)]
@@ -186,21 +229,21 @@ mod tests {
 
     // #[test]
     fn test_files() {
-        build_files_table();
+        build_files();
         get_file_bb(File::A).print();
         get_file_bb(File::E).print();
     }
 
     // #[test]
     fn test_ranks() {
-        build_ranks_table();
+        build_ranks();
         get_rank_bb(Rank::First).print();
         get_rank_bb(Rank::Fourth).print();
     }
 
     // #[test]
     fn test_pawn_moves() {
-        build_pawn_moves_table();
+        build_pawn_moves();
         get_pawn_moves(Square::from(File::E, Rank::Fourth)).print();
         get_pawn_moves(Square::from(File::B, Rank::Second)).print();
         get_pawn_moves(Square::from(File::A, Rank::First)).print();
@@ -208,7 +251,7 @@ mod tests {
 
     // #[test]
     fn test_pawn_attacks() {
-        build_pawn_attacks_table();
+        build_pawn_attacks();
         get_pawn_attacks(Square::from(File::E, Rank::Fourth)).print();
         get_pawn_attacks(Square::from(File::B, Rank::Second)).print();
         get_pawn_attacks(Square::from(File::A, Rank::First)).print();
@@ -228,6 +271,16 @@ mod tests {
         build_king_moves();
         get_king_moves(Square::from(File::E, Rank::Fourth)).print();
         get_king_moves(Square::from(File::H, Rank::Seventh)).print();
+    }
+
+    #[test]
+    fn test_rays() {
+        build_rays();
+        get_ray(Square::from(File::E, Rank::Fourth), Direction::North).print();
+        get_ray(Square::from(File::B, Rank::Second), Direction::Northeast).print();
+        get_ray(Square::from(File::A, Rank::Eighth), Direction::South).print();
+        get_ray(Square::from(File::A, Rank::Eighth), Direction::East).print();
+        get_ray(Square::from(File::A, Rank::Eighth), Direction::Northwest).print();
     }
 }
 
