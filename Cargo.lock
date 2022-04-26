@@ -5,12 +5,3 @@ version = 3
 [[package]]
 name = "rust-monke"
 version = "0.0.1"
-dependencies = [
- "ux",
-]
-
-[[package]]
-name = "ux"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5efdcf885b33bb81bc9336e66cebc10d503288449466c0e43e51250ddc93a3d8"
