@@ -22,10 +22,10 @@
 
 ## `helper`
 
-- [ ] bitboard lookup tables
-  - [ ] files, ranks
-  - [ ] knight, king, pawn
-  - [ ] rays (bishop + rook)
+- [x] bitboard lookup tables
+  - [x] files, ranks
+  - [x] knight, king, pawn
+  - [x] rays (bishop + rook)
   - [ ] ...
 
 ## `movegen`
