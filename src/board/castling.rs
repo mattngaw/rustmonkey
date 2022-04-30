@@ -2,10 +2,6 @@
 
 use super::*;
 
-/// Represents the two sides where one can castle
-#[derive(Debug, PartialEq)]
-pub enum CastlingSide { Kingside, Queenside }
-
 /// A 4-bit word representing who still has castling rights
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Castling(u8);
@@ -26,55 +22,58 @@ impl Castling {
         Castling(v)
     }
 
-    pub fn get(&mut self, w: Whose, cs: CastlingSide) -> bool {
+    /// Gets the castling rights for a side and player
+    pub fn get(&mut self, w: Whose, cs: Side) -> bool {
         let Castling(v) = *self;
         match (w, cs) {
-            (Whose::Ours, CastlingSide::Kingside) => {
+            (Whose::Ours, Side::K) => {
                 (v & 0b1000u8) == 0b1000u8
             }
-            (Whose::Ours, CastlingSide::Queenside) => {
+            (Whose::Ours, Side::Q) => {
                 (v & 0b0100u8) == 0b0100u8
             }
-            (Whose::Theirs, CastlingSide::Kingside) => {
+            (Whose::Theirs, Side::K) => {
                 (v & 0b0010u8) == 0b0010u8
             }
-            (Whose::Theirs, CastlingSide::Queenside) => {
+            (Whose::Theirs, Side::Q) => {
                 (v & 0b0001u8) == 0b0001u8
             }
         }
     }
 
-    pub fn set(&mut self, w: Whose, cs: CastlingSide) -> () {
+    /// Sets the castling rights for a side and player
+    pub fn set(&mut self, w: Whose, cs: Side) -> () {
         let Castling(v) = *self;
         match (w, cs) {
-            (Whose::Ours, CastlingSide::Kingside) => {
+            (Whose::Ours, Side::K) => {
                 *self = Castling(v | 0b1000u8);
             }
-            (Whose::Ours, CastlingSide::Queenside) => {
+            (Whose::Ours, Side::Q) => {
                 *self = Castling(v | 0b0100u8);
             }
-            (Whose::Theirs, CastlingSide::Kingside) => {
+            (Whose::Theirs, Side::K) => {
                 *self = Castling(v | 0b0010u8);
             }
-            (Whose::Theirs, CastlingSide::Queenside) => {
+            (Whose::Theirs, Side::Q) => {
                 *self = Castling(v | 0b0001u8);
             }
         }
     }
 
-    pub fn reset(&mut self, w: Whose, cs: CastlingSide) -> () {
+    /// Resets the castling rights for a side and player
+    pub fn reset(&mut self, w: Whose, cs: Side) -> () {
         let Castling(v) = *self;
         match (w, cs) {
-            (Whose::Ours, CastlingSide::Kingside) => {
+            (Whose::Ours, Side::K) => {
                 *self = Castling(v & 0b0111u8);
             }
-            (Whose::Ours, CastlingSide::Queenside) => {
+            (Whose::Ours, Side::Q) => {
                 *self = Castling(v & 0b1011u8);
             }
-            (Whose::Theirs, CastlingSide::Kingside) => {
+            (Whose::Theirs, Side::K) => {
                 *self = Castling(v & 0b1101u8);
             }
-            (Whose::Theirs, CastlingSide::Queenside) => {
+            (Whose::Theirs, Side::Q) => {
                 *self = Castling(v & 0b1110u8);
             }
         }
@@ -90,21 +89,21 @@ impl Castling {
     }
 }
 
-// #[cfg(test)]
+#[cfg(test)]
 mod tests {
     
     use super::*;
 
-    #[test]
+    // #[test]
     fn test_get_set_reset() {
         let mut c = Castling::new(0u8);
         assert_eq!(c, Castling::default());
-        c.set(Whose::Ours, CastlingSide::Kingside);
+        c.set(Whose::Ours, Side::K);
         assert_eq!(c, Castling(0b1000u8));
-        assert_eq!(c.get(Whose::Ours, CastlingSide::Kingside), true);
-        assert_eq!(c.get(Whose::Theirs, CastlingSide::Queenside), false);
-        c.reset(Whose::Ours, CastlingSide::Kingside);
-        assert_eq!(c.get(Whose::Ours, CastlingSide::Kingside), false);
+        assert_eq!(c.get(Whose::Ours, Side::K), true);
+        assert_eq!(c.get(Whose::Theirs, Side::Q), false);
+        c.reset(Whose::Ours, Side::K);
+        assert_eq!(c.get(Whose::Ours, Side::K), false);
     }
 
 }

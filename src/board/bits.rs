@@ -1,6 +1,6 @@
 //! The foundations of a chess board representation
 //! 
-//! A [Position] is made up [`Square`s](Square) and [`Bitboard`s](Bitboard).
+//! A [Board](crate::board::Board) is made up [`Square`s](Square) and [`Bitboard`s](Bitboard).
 //! 
 //! # Example: Placing two kings on a bitboard
 //! ```rust
@@ -50,8 +50,10 @@ pub enum Rank {
 }
 
 impl Rank {
+    /// Number of ranks
     const COUNT: usize = 8;
 
+    /// Maps integers from zero to seven inclusive to ranks
     pub fn convert(x: isize) -> Rank {
         match x {
             0isize => Rank::First,
@@ -66,6 +68,7 @@ impl Rank {
         }
     }
 
+    /// Returns the flipped version of a rank
     pub fn flipped(&self) -> Rank {
         match *self {
             Rank::First => Rank::Eighth,
@@ -96,8 +99,10 @@ pub enum File {
 }
 
 impl File {
+    /// Number of files
     const COUNT: usize = 8;
 
+    /// Maps integers from zero to seven inclusive to files
     pub fn convert(x: isize) -> File {
         match x {
             0isize => File::A,
@@ -112,6 +117,7 @@ impl File {
         }
     }
 
+    /// Returns the flipped version of a file
     pub fn flipped(&self) -> File {
         match *self {
             File::A => File::H,
@@ -169,6 +175,7 @@ impl Square {
         }
     }
 
+    /// Unwraps the value of a square (assumes it has a value)
     pub fn val(&self) -> u8 {
         match *self {
             Square::Null => panic!("Expected to convert Square::Sq to value, instead got Square::Null"),
@@ -176,11 +183,33 @@ impl Square {
         }
     }
 
+    /// Checks if a square is Square::Null
     pub fn is_null(&self) -> bool {
         *self == Square::Null
     }
 
-    pub fn range(s1: u8, s2: u8) -> SquareRange {
+    /// Creates an iterator of squares from two squares
+    pub fn range(sq1: Square, sq2: Square) -> SquareRange {
+        if sq1.is_null() {
+            panic!("Attempted to start range with null square");
+        }
+        if sq2.is_null() {
+            panic!("Attempted to end range with null square");
+        }
+        let (s1, s2) = (sq1.val(), sq2.val());
+        match s1.cmp(&s2) {
+            Ordering::Equal => panic!("Attempted to make empty range"),
+            _ => {
+                SquareRange {
+                    current: s1,
+                    end: s2,
+                }
+            }
+        }
+    }
+
+    /// Creates an iterator of squares from an integer range
+    pub fn range_from_int(s1: u8, s2: u8) -> SquareRange {
         if s1 > Square::MAX_VAL {
             panic!("Attempted to start range with invalid square value");
         }
@@ -238,6 +267,7 @@ impl Square {
         }
     }
 
+    /// Returns the square above
     pub fn rank_up(&self) -> Square {
         match *self {
             Square::Null => panic!("Attempted to +1 the rank of Square::Null"),
@@ -248,6 +278,7 @@ impl Square {
         }
     }
 
+    /// Returns the square below
     pub fn rank_down(&self) -> Square {
         match *self {
             Square::Null => panic!("Attempted to -1 the rank of Square::Null"),
@@ -258,6 +289,7 @@ impl Square {
         }
     }
 
+    /// Returns the square to the right
     pub fn file_up(&self) -> Square {
         match *self {
             Square::Null => panic!("Attempted to +1 the file of Square::Null"),
@@ -268,6 +300,7 @@ impl Square {
         }
     }
 
+    /// Returns the square to the left
     pub fn file_down(&self) -> Square {
         match *self {
             Square::Null => panic!("Attempted to -1 the file of Square::Null"),
@@ -278,6 +311,7 @@ impl Square {
         }
     }
 
+    /// Returns the next square
     pub fn next(&self) -> Square {
         match *self {
             Square::Null => panic!("Attempted to get the next square after Square::Null"),
@@ -288,6 +322,7 @@ impl Square {
         }
     }
 
+    /// Returns the square offset by nmber of ranks and files
     pub fn offset(&self, dx: i8, dy: i8) -> Square {
         match *self {
             Square::Null => panic!("Attempted to get offset from Square::Null"),
@@ -354,11 +389,13 @@ impl Square {
         }
     }
 
+    /// Prints the square
     pub fn print(&self) -> () {
         println!("{}", self.to_string());
     }
 }
 
+/// The IntoIterator made from two [Squares](Square)
 #[derive(Copy, Clone, Debug)]
 pub struct SquareRange {
     current: u8,

@@ -1,32 +1,47 @@
+//! Lookup tables for move generation
+//! 
+//! Provides functions for building tables and looking up bitboards
+
 use super::Direction;
 use crate::board::bits::{File, Rank, Square, Bitboard};
 
+/// Lookup table for bitboards with files set
 static mut FILES_TABLE: [Bitboard; 8] = [Bitboard::Null; 8];
 
+/// Lookup table for bitboards with ranks set
 static mut RANKS_TABLE: [Bitboard; 8] = [Bitboard::Null; 8];
 
+/// Lookup table for pawn moves
 static mut PAWN_MOVES_TABLE: [Bitboard; 64] = [Bitboard::Null; 64];
 
+/// Lookup table for pawn attacks
 static mut PAWN_ATTACKS_TABLE: [Bitboard; 64] = [Bitboard::Null; 64];
 
+/// Lookup table for knight moves
 static mut KNIGHT_TABLE: [Bitboard; 64] = [Bitboard::Null; 64];
 
+/// Lookup table for king moves
 static mut KING_TABLE: [Bitboard; 64] = [Bitboard::Null; 64];
 
+/// Lookup table for rays (rook/bishop/queen moves)
 static mut RAYS_TABLE: [[Bitboard; 64]; 8] = [[Bitboard::Null; 64]; 8];
 
+/// File-rank offsets for knight move generation
 static KNIGHT_OFFSETS: [(i8, i8); 8] = [
     (1,2), (2,1), (2,-1), (1,-2), (-1,-2), (-2,-1), (-2,1), (-1,2)
 ];
 
+/// File-rank offsets for king move generation
 static KING_OFFSETS: [(i8, i8); 8] = [
     (0,1), (1,1), (1,0), (1,-1), (0,-1), (-1,-1), (-1,0), (-1,1)
 ];
 
+/// File-rank vectors for rook/bishop/queen move generation
 static RAY_VECTORS: [(i8, i8); 8] = [
     (0,1), (1,0), (0,-1), (-1,0), (1,1), (1,-1), (-1,-1), (-1,1)
 ];
 
+/// Builds all the lookup tables
 pub fn build() -> () {
     build_files();
     build_ranks();
@@ -302,7 +317,7 @@ mod tests {
         get_pawn_attacks(Square::from(File::A, Rank::Third)).print();
         get_knight_moves(Square::from(File::E, Rank::Fourth)).print();
         get_king_moves(Square::from(File::E, Rank::Fourth)).print();
-        get_ray(Square::from(File::B, Rank::Second), Direction::Northeast).print();
+        get_ray(Square::from(File::B, Rank::Second), Direction::East).print();
     }
 }
 
