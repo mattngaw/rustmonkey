@@ -381,6 +381,14 @@ impl Square {
         }
     }
 
+    /// Returns the flipped square
+    pub fn flipped(&self) -> Square {
+        match *self {
+            Square::Null => panic!("Attempted to get a Square::Null flipped"),
+            Square::Sq(s) => Square::Sq(63u8 - s),
+        }
+    }
+
     /// Converts the square into a singular (only one set bit) [`Bitboard`]
     pub fn to_bitboard(&self) -> Bitboard {
         match self {
