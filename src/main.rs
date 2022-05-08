@@ -1,6 +1,6 @@
 //! A chess library + engine written in Rust.
 #[doc(hidden)]
-extern crate ux;
+// extern crate ux;
 
 mod board;
 
