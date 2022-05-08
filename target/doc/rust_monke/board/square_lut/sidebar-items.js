@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["SquareLUT","An array of 64 [`Piece`]s"],["SquareLUTIntoIterator",""]]});
