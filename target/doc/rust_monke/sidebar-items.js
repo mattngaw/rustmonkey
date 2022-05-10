@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["main",""]],"mod":[["board","Represents a chess board and provides an interface for changing the state of the board."]]});
