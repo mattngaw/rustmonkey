@@ -1,8 +1,8 @@
-<!--<div id="crazyara-logo" align="center">
+<div align="center">
     <br/>
-    <img src="./etc/media/rustmonke.jpg" alt="Rust Monke Logo" width="512"/>
-    <h3>A UCI compliant chess engine written in Rust</h3>
-</div>-->
+    <img src="./etc/media/rustmonkey.jpg" alt="Rust Monke Logo" width="512"/>
+    <h3>A chess engine written in Rust</h3>
+</div>
 
 ## Features
 
