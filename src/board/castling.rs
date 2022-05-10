@@ -89,6 +89,8 @@ impl Castling {
     }
 }
 
+pub enum Side {K , Q}
+
 #[cfg(test)]
 mod tests {
     

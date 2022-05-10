@@ -82,6 +82,19 @@ impl Rank {
             Rank::Null => Rank::Null
         }
     }
+    // pub fn num_to_rank(num : u8) -> Rank {
+    //     match num {
+    //         1 => Rank::First,
+    //         2 => Rank::Second,
+    //         3 => Rank::Third,
+    //         4 => Rank::Fourth,
+    //         5 => Rank::Fifth,
+    //         6 => Rank::Sixth,
+    //         7 => Rank::Seventh,
+    //         8 => Rank::Eighth,
+    //         _ => Rank::Null
+    //     }
+    // }
 }
 
 /// The columns of a chess board
@@ -131,6 +144,19 @@ impl File {
             File::Null => File::Null
         }
     }
+    // pub fn num_to_file(num: u8) -> File {
+    //     match num {
+    //         1 => File::A,
+    //         2 => File::B,
+    //         3 => File::C,
+    //         4 => File::D,
+    //         5 => File::E,
+    //         6 => File::F,
+    //         7 => File::G,
+    //         8 => File::H,
+    //         _ => File::Null
+    //     }
+    // }
 }
 
 /// A value ranging from 0 to 64, representing the squares from a1-h8 in 

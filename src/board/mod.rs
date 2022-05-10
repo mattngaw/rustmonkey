@@ -177,6 +177,7 @@ impl Board {
     /// Removes the piece (if there is one) that was originally on `sq`,
     /// and then replaces it with the new piece `p`
     pub fn set (&mut self, sq: Square, p: Piece) -> () {
+        // print!("hello\n");
         match sq {
             Square::Null => panic!("Attempted to set on Board at Square::Null"),
             Square::Sq(_) => {
@@ -355,14 +356,190 @@ impl Board {
         self.sq_lut.print();
         println!("");
     }
+
+    pub fn board_clear (&mut self) -> () {
+        self.whose_bbs = [Bitboard::EMPTY; Whose::COUNT];
+        self.piece_type_bbs = [Bitboard::EMPTY; PieceType::NK_COUNT];
+        self.kings = [Square::Null; Whose::COUNT];
+        self.sq_lut = SquareLUT::new();
+        self.castling = Castling::EMPTY; 
+        // self.whose =  Whose::Ours;
+        self.color = Color::White; 
+        self.en_passant = Square::Null; 
+        self.half_moves = 0u8;
+        self.rule50 = 0u8;
+    }
+
+    pub fn is_alpha(c : char) -> bool {
+        return c.is_ascii_alphabetic();
+    }
+
+    pub fn is_lower(c: char) -> bool {
+        return c.is_ascii_lowercase();
+    }
+
+    pub fn to_lower(c: char) -> char {
+        if (Board::is_lower(c)) {
+            return c;
+        }
+        else {
+            return (c as u8 + 32) as char;
+        }
+    }
+
+    pub fn board_from_fen_pieces(&mut self, pieces: &str) -> () {
+        let mut pieces_len = pieces.len();
+
+        let mut r = Rank::Eighth;
+        let mut f = File::A;
+        // let f = 0;
+        let fen_slice = pieces.as_bytes();
+
+
+        for i in 0..pieces_len {
+            let piece_chr = fen_slice[i] as char;
+            print!("piece_chr: {}\n", piece_chr);
+            let piece = fen_slice[i] as i8;
+            if 49 <= piece && piece <= 56 {
+                let open = piece - 48;
+                match open {
+                    1 => f = File::convert(((f as i8) + open) as isize),
+                    2 => f = File::convert(((f as i8) + open) as isize),
+                    3 => f = File::convert(((f as i8) + open) as isize),
+                    4 => f = File::convert(((f as i8) + open) as isize),
+                    5 => f = File::convert(((f as i8) + open) as isize),
+                    6 => f = File::convert(((f as i8) + open) as isize),
+                    8 => f = File::convert(((f as i8) + open) as isize),
+                    _ => panic!("{} is not better ", open)
+                    
+                }
+                assert!((f as i8) <= 8);
+            }
+            else if Board::is_alpha(piece_chr) {
+                let s = Square::from(f,r);
+                // let b = s.to_bitboard();
+                let is_black = Board::is_lower(piece_chr);
+                match piece_chr {
+                    'p' => Board::set(self,s, Piece::Pc(Whose::Theirs, PieceType::P)),
+                    'n' => Board::set(self,s, Piece::Pc(Whose::Theirs, PieceType::N)),
+                    'b' => Board::set(self,s, Piece::Pc(Whose::Theirs, PieceType::B)),
+                    'r' => Board::set(self,s, Piece::Pc(Whose::Theirs, PieceType::R)),
+                    'q' => Board::set(self,s, Piece::Pc(Whose::Theirs, PieceType::Q)),
+                    'k' => Board::set(self,s, Piece::Pc(Whose::Theirs, PieceType::K)),
+
+                    'P' => Board::set(self,s, Piece::Pc(Whose::Ours, PieceType::P)),
+                    'N' => Board::set(self,s, Piece::Pc(Whose::Ours, PieceType::N)),
+                    'B' => Board::set(self,s, Piece::Pc(Whose::Ours, PieceType::B)),
+                    'R' => Board::set(self,s, Piece::Pc(Whose::Ours, PieceType::R)),
+                    'Q' => Board::set(self,s, Piece::Pc(Whose::Ours, PieceType::Q)),
+                    'K' => Board::set(self,s, Piece::Pc(Whose::Ours, PieceType::K)),
+
+                    _ => panic!("Alpha character {} is not a piece!", piece_chr)
+                }
+
+                // if (is_black) {
+
+                // }
+                // else {
+
+                // }
+                // print!("file1: {}\n", (f as i8) + 1i8);
+                f = File::convert(((f as i8) + 1i8 ) as isize);
+                // print!("file: {}\n", f as isize);
+                assert!((f as i8) <= 8);
+            }
+            else if piece_chr == '/' {
+                // print!("file234: {}\n", (f as i8));
+                assert!((f as i8) == 8);
+                f = File::A;
+                r = Rank::convert(((r as i8) - 1) as isize);
+            }
+            else{
+                panic!("Invalid character: {}", piece_chr);
+            }
+        }
+    }
+
+    pub fn board_from_fen(&mut self, fen: &str) -> () {
+        // let P = Board::new();
+        self.board_clear();
+        let fenParts : Vec<_>= fen.split_whitespace().collect();
+        let mut is_black = false;
+
+        //Pieces
+        Board::board_from_fen_pieces(self, fenParts[0]);
+        print!("eijfoiwjefjiow\n");
+        //Side to move
+        let sideToMove= fenParts[1];
+        if sideToMove.len() != 1 {
+            panic!("Invalid FEN side-to-move {}", sideToMove)
+        }
+        if sideToMove == 'w'.to_string() {
+            is_black = false
+        }
+        else if sideToMove == 'b'.to_string() {
+            is_black = true
+        }
+        else {
+            panic!("Invalid FEN side-to-move char: {}", sideToMove);
+        }
+        print!("1\n");
+
+        //Castling
+        let castling = fenParts[2];
+        let castling_len = castling.len();
+        if !(castling_len == 1 && castling == '-'.to_string()) {
+            if (!(1 <= castling_len && castling_len <= 4)) {
+                panic!("Castling string {} too long", castling);
+            }
+            let castlingChars: Vec<_>= castling.chars().collect();
+            for c in castlingChars {
+                let castlingElem = c;
+                match castlingElem {
+                    'K' => Board::castling_set(self, Whose::Ours, Side::K),
+                    'Q' => Board::castling_set(self, Whose::Ours, Side::Q),
+                    'k' => Board::castling_set(self, Whose::Theirs, Side::K),
+                    'q' => Board::castling_set(self, Whose::Theirs, Side::Q),   
+                    _ => panic!("Invalid castling char {}", castlingElem)               
+                }
+            }
+        }
+
+        //En passant flag
+        let enPassant = fenParts[3];
+        let mut enPassantFile = File::A;
+        let mut enPassantRank = Rank::First;
+        let mut enPassantChars: Vec<_> = enPassant.chars().collect();
+
+        if enPassant != '-'.to_string() {
+            enPassantFile = File::convert((enPassantChars[0] as i8) as isize);
+            enPassantRank = Rank::convert((enPassantChars[1] as i8) as isize);
+        }
+
+
+        //Half moves
+        let halfMove = fenParts[4];
+        self.half_moves = (halfMove.parse::<i32>().unwrap()) as u8;
+
+        //Full moves
+        let fullMove = fenParts[5];
+        self.rule50 = fullMove.parse::<i32>().unwrap() as u8;
+
+        if is_black{
+            Board::flip(self);
+        }
+        print!("2\n");
+
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
 
-    // #[test]
+    #[test]
     fn test_board_get_set() {
         let mut bd = Board::new();
         bd.whose_bbs = [Bitboard::EMPTY; Whose::COUNT];
@@ -381,6 +558,13 @@ mod tests {
         assert_eq!(bd.get(Square::Sq(47)), Piece::Pc(Whose::Theirs, PieceType::N));
         assert_eq!(bd.get(Square::Sq(63)), Piece::Pc(Whose::Theirs, PieceType::K));
         assert_eq!(bd.get(Square::Sq(3)), Piece::Pc(Whose::Ours, PieceType::K));
+        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        let mut bd2 = Board::new();
+        // bd2.whose_bbs = [Bitboard::EMPTY; Whose::COUNT];
+        // bd2.piece_type_bbs = [Bitboard::EMPTY; PieceType::NK_COUNT];  
+        bd2.board_from_fen(fen);
+        bd2.print();
+        print!("hi");
     }
 
     // #[test]
