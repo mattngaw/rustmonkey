@@ -8,12 +8,14 @@ mod castling;
 mod square_lut;
 mod util;
 
-use bits::{Square, Bitboard};
-use castling::{CastlingSide, Castling};
-use square_lut::{SquareLUT};
+use crate::movegen::Move;
+use crate::helper::{king_origin, rook_origin};
+use bits::{File, Rank, Square, Bitboard};
+use castling::Castling;
+use square_lut::SquareLUT;
 
 /// The six piece types in chess
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum PieceType {
     P,
     N,
@@ -36,7 +38,7 @@ impl PieceType {
 
 
 /// Enum for colorless piece representation
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Whose {
     Ours,
     Theirs,
@@ -55,9 +57,7 @@ impl Whose {
 }
 
 /// Tuple of [`PieceType`] and [`Whose`]
-///
-/// Used in [`SquareLUT`](square_lut::SquareLUT)
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Piece {
     Null,
     Empty,
@@ -84,15 +84,33 @@ impl Piece {
             Piece::Pc(Whose::Theirs, PieceType::K) => 'k',
         }
     }
+
+    pub fn is_whose(&self, w: Whose) -> bool {
+        match *self {
+            Piece::Pc(w_, _) => (w == w_),
+            Piece::Empty => false,
+            Piece::Null => panic!("Attempted to check Whose of null piece")
+        }
+    }
+
+    pub fn is_piecetype(&self, pt: PieceType) -> bool {
+        match *self {
+            Piece::Pc(_, pt_) => (pt == pt_),
+            Piece::Empty => false,
+            Piece::Null => panic!("Attempted to check PieceType of null piece")
+        }
+    }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+/// Denotes whose turn it is
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Color {
     White,
     Black,
 }
 
 impl Color {
+    /// Flips a Color
     pub fn flip(&mut self) -> () {
         match *self {
             Color::White => *self = Color::Black,
@@ -101,14 +119,18 @@ impl Color {
     }
 }
 
+/// Represents the two sides where one can castle
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Side { K, Q }
+
 /// All the components combined to represent a chess board
 ///
-///
+/// 
 #[derive(PartialEq, Debug, Copy, Clone)]
 pub struct Board {
-    whose_bbs: [Bitboard; Whose::COUNT],
-    piece_type_bbs: [Bitboard; PieceType::NK_COUNT],
-    kings: [Square; Whose::COUNT],
+    pub whose_bbs: [Bitboard; Whose::COUNT],
+    pub piece_type_bbs: [Bitboard; PieceType::NK_COUNT],
+    pub kings: [Square; Whose::COUNT],
     sq_lut: SquareLUT,
     castling: Castling,
     color: Color,
@@ -136,6 +158,13 @@ impl Board {
         }
     }
 
+    pub fn clear(&mut self) -> () {
+        for wbb in &mut self.whose_bbs { *wbb = Bitboard::EMPTY; }
+        for ptbb in &mut self.piece_type_bbs { *ptbb = Bitboard::EMPTY; }
+        self.sq_lut.clear();
+    }
+
+    /// Gets the piece at a [Square](crate::board::bits::Square)
     pub fn get (&self, sq: Square) -> Piece {
         match sq {
             Square::Null => panic!("Attempted to get from Board at Square::Null"),
@@ -143,6 +172,10 @@ impl Board {
         }
     }
 
+    /// Sets the piece at a [Square](crate::board::bits::Square)
+    /// 
+    /// Removes the piece (if there is one) that was originally on `sq`,
+    /// and then replaces it with the new piece `p`
     pub fn set (&mut self, sq: Square, p: Piece) -> () {
         match sq {
             Square::Null => panic!("Attempted to set on Board at Square::Null"),
@@ -177,7 +210,31 @@ impl Board {
         }
     }
 
-    pub fn move_piece (&mut self, to: Square, from: Square) -> () {
+    /// Returns a bitboard representing all of the squares with pieces on them
+    pub fn get_all(&self) -> Bitboard {
+        self.whose_bbs[Whose::Ours as usize] | self.whose_bbs[Whose::Theirs as usize]
+    }
+
+    /// Returns a bitboard representing all of the squares with `w: Whose` 
+    /// pieces on them
+    pub fn get_whose(&self, w: Whose) -> Bitboard {
+        self.whose_bbs[w as usize]
+    }
+
+    /// Returns a bitboard representing all of the squares with `p: Piece` 
+    /// pieces on them
+    pub fn get_pieces(&self, p: Piece) -> Bitboard {
+        match p {
+            Piece::Pc(w, pt) => {
+                self.whose_bbs[w as usize] & self.piece_type_bbs[pt as usize]
+            }
+            Piece::Empty => panic!("Attempted to get empty piece"),
+            Piece::Null => panic!("Attempted to get null piece")
+        }
+    }
+
+    /// Moves a [Piece] from a square to another square
+    pub fn move_piece(&mut self, to: Square, from: Square) -> () {
         let p_from = self.get(from);
         match p_from {
             Piece::Null => panic!("Attempted to move Piece::Null"),
@@ -191,6 +248,76 @@ impl Board {
         }
     }
 
+    /// Updates the board given a valid move
+    pub fn apply(&mut self, m: Move) -> () {
+        if m.castling.is_some() {
+            let cs = m.castling.unwrap();
+            self.apply_castling(cs);
+        } else if m.promotion.is_some() {
+            self.set(m.from, Piece::Empty);
+            let promo_pt = m.promotion.unwrap();
+            self.set(m.to, Piece::Pc(Whose::Ours, promo_pt));
+        } else {
+            let moved_piece = self.get(m.from);
+            self.move_piece(m.to, m.from);
+            match moved_piece {
+                Piece::Pc(Whose::Ours, PieceType::K) => 
+                    self.castling_reset_both(Whose::Ours),
+                Piece::Pc(Whose::Ours, PieceType::R) => {
+                    for side in [Side::K, Side::Q] {
+                        let origin = rook_origin(side, Whose::Ours, self.color);
+                        let castling = self.castling_get(Whose::Ours, side);
+                        if castling && m.from == origin {
+                            self.castling_reset(Whose::Ours, side);
+                        }
+                    }
+                }
+                _ => ()
+            }
+            if m.dpp {
+                debug_assert_eq!(moved_piece, Piece::Pc(Whose::Ours, PieceType::P));
+                let left = m.to.file_down();
+                let right = m.to.file_up();
+                let their_pawn = Piece::Pc(Whose::Theirs, PieceType::P);
+                for sq in [left, right] {
+                    match sq {
+                        Square::Sq(_) => {
+                            if self.get(sq) == their_pawn {
+                                self.en_passant = m.to.rank_down();
+                            } else {
+                                self.en_passant = Square::Null;
+                            }
+                        }
+                        Square::Null => ()
+                    }
+                }
+            }
+        }
+    }
+
+    /// Helper function, applies castling to the board
+    fn apply_castling (&mut self, cs: Side) -> () {
+        debug_assert!(self.castling_get(Whose::Ours, cs));
+        let king = match self.color {
+            Color::White => Square::from(File::E, Rank::First),
+            Color::Black => Square::from(File::E, Rank::Eighth)
+        };
+        let rook = match (self.color, cs) {
+            (Color::White, Side::K) => Square::from(File::H, Rank::First),
+            (Color::White, Side::Q) => Square::from(File::A, Rank::First),
+            (Color::Black, Side::K) => Square::from(File::H, Rank::Eighth),
+            (Color::Black, Side::Q) => Square::from(File::A, Rank::Eighth),
+        };
+        let (king_new, rook_new) = match cs {
+            Side::K => (king.offset(2i8, 0), rook.offset(-2i8, 0)),
+            Side::Q => (king.offset(-2i8, 0), rook.offset(3i8, 0)),
+        };
+        self.move_piece(king_new, king);
+        self.move_piece(rook_new, rook);
+        self.castling_reset_both(Whose::Ours);
+    }
+
+    /// Flips an entire board
     pub fn flip (&mut self) -> () {
         for wbb in &mut self.whose_bbs { wbb.flip(); }
         for ptbb in &mut self.piece_type_bbs { ptbb.flip(); }
@@ -200,20 +327,33 @@ impl Board {
         self.color.flip();
     }
 
-    pub fn castling_get(&mut self, w: Whose, cs: CastlingSide) -> bool {
+    /// Gets castling rights
+    pub fn castling_get(&mut self, w: Whose, cs: Side) -> bool {
         self.castling.get(w, cs)
     }
 
-    pub fn castling_set(&mut self, w: Whose, cs: CastlingSide) -> () {
+    /// Sets castling rights
+    pub fn castling_set(&mut self, w: Whose, cs: Side) -> () {
         self.castling.set(w, cs)
     }
 
-    pub fn castling_reset(&mut self, w: Whose, cs: CastlingSide) -> () {
+    /// Resets castling rights
+    pub fn castling_reset(&mut self, w: Whose, cs: Side) -> () {
         self.castling.reset(w, cs)
     }
 
+    /// Resets castling rights
+    pub fn castling_reset_both(&mut self, w: Whose) -> () {
+        self.castling.reset(w, Side::K);
+        self.castling.reset(w, Side::Q);
+    }
+
+    /// Prints the board
+    /// 
+    /// Our pieces are uppercase, theirs are lowercase
     pub fn print (&self) -> () {
         self.sq_lut.print();
+        println!("");
     }
 }
 
@@ -241,5 +381,24 @@ mod tests {
         assert_eq!(bd.get(Square::Sq(47)), Piece::Pc(Whose::Theirs, PieceType::N));
         assert_eq!(bd.get(Square::Sq(63)), Piece::Pc(Whose::Theirs, PieceType::K));
         assert_eq!(bd.get(Square::Sq(3)), Piece::Pc(Whose::Ours, PieceType::K));
+    }
+
+    // #[test]
+    fn test_apply() {
+        let mut bd = Board::new();
+        bd.clear();
+        bd.set(Square::from(File::E, Rank::Second), 
+               Piece::Pc(Whose::Ours, PieceType::P));
+        bd.print();
+        let m = Move {
+            to: Square::from(File::E, Rank::Fourth),
+            from: Square::from(File::E, Rank::Second),
+            capture: false,
+            dpp: true,
+            promotion: None,
+            castling: None
+        };
+        bd.apply(m);
+        bd.print();
     }
 }

@@ -1,8 +1,8 @@
 //! A chess library + engine written in Rust.
-#[doc(hidden)]
-extern crate ux;
 
-mod board;
+pub mod board;
+pub mod helper;
+pub mod movegen;
 
 fn main() {
     println!("Hello, world!");

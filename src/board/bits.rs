@@ -36,7 +36,7 @@ use std::fmt;
 use super::util::*;
 
 /// The rows of a chess board
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Eq, Hash, Debug, Copy, Clone)]
 pub enum Rank { 
     First = 0,
     Second = 1, 
@@ -85,7 +85,7 @@ impl Rank {
 }
 
 /// The columns of a chess board
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Eq, Hash, Debug, Copy, Clone)]
 pub enum File { 
     A = 0, 
     B = 1, 
@@ -135,7 +135,7 @@ impl File {
 
 /// A value ranging from 0 to 64, representing the squares from a1-h8 in 
 /// rank-major order
-#[derive(PartialEq, Debug, Copy, Clone)]
+#[derive(PartialEq, Eq, Hash, Debug, Copy, Clone)]
 pub enum Square {
     /// An invalid square (typically the result of unsafe operations)
     Null,
@@ -432,7 +432,7 @@ impl Iterator for SquareRange {
 /// 
 /// The bits increase in rank-major order (i.e. the second LSB == `Square(1)` 
 /// (b1), the third LSB == `Square(2)` (b2), etc.)
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Debug, Clone, Copy)]
 pub enum Bitboard {
     /// An invalid bitboard (typically the result of an invalid operation)
     Null,
@@ -595,7 +595,7 @@ impl Bitboard {
         match self {
             Bitboard::Null => panic!("Attempted to get MSB of Bitboard::Null"),
             Bitboard::Bb(0u64) => Square::Null,
-            Bitboard::Bb(b) => Square::Sq(b.leading_zeros() as u8),
+            Bitboard::Bb(b) => Square::Sq(63 - b.leading_zeros() as u8),
         }
     }
 
